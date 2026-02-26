@@ -26,14 +26,15 @@ This Plugin does the following:
 3. Provide the key bindings for WezTerm's `config.keys` to:
    1. Active pane by index
    2. Active adjacent pane on the left, right, above & below
-   3. Adjust active pane size
-   4. Create new pane on the left, right, top and bottom of currect pane
-   5. Rotate pane sequence in a counterclockwise and clockwise manner
-   6. Zoom in and out of pane
-   7. Close active pane
-   8. Equalize panes in the active tab
+   3. Activate pane via PaneSelect
+   4. Adjust active pane size
+   5. Create new pane on the left, right, top and bottom of currect pane
+   6. Rotate pane sequence in a counterclockwise and clockwise manner
+   7. Zoom in and out of pane
+   8. Close active pane
+   9. Equalize panes in the active tab
 
-4. Disable certain default key bindings related to pane management.
+4. Disable certain WezTerm default key bindings related to pane management.
 
 
 ## Installation & Usage
