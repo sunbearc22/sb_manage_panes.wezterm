@@ -19,7 +19,8 @@ This Plugin does the following:
    2. `sb-splitpane`: Implement `wezterm.action.SplitPane` and update `splitpaneinfo`
    3. `sb-closecurrentpane`: Implement `wezterm.action.CloseCurrentPane` and update `splitpaneinfo`
    4. `sb-equalize-panes`: Uses `wezterm.action.AdjustPaneSize` and `splitpaneinfo` to equalize the width of all panes in the active tab. In addition, it considers the presence of panes with _non-adjustable-left-edge (i.e. naledge)_ within a group of panes in the active tab and in pane(s) found in a subgroup of panes of a group of panes and how they affect the pane equalization width.
-      ![equalized_panes](images/equalized_panes.png)
+      ![equalized_panes_1](images/equalized_panes_1.png)
+      ![equalized_panes_2](images/equalized_panes_2.png)
 
 
 3. Provide the key bindings for WezTerm's `config.keys` to:
