@@ -1,4 +1,4 @@
-# sb_mane_panes.wezterm
+# sb_manage_panes.wezterm
 
 This Plugin does the following:
 
@@ -14,11 +14,13 @@ This Plugin does the following:
    ```
    Note: `win_id`, `tab_id`, `pane_id` must be a string.
 
-2. Provide 4 event handlers to performing the following task(s):
+2. Provide 4 event handlers to perform the following task(s):
    1. `window-config-reloaded`: Update `splitpaneinfo` everytime config reloads
    2. `sb-splitpane`: Implement `wezterm.action.SplitPane` and update `splitpaneinfo`
    3. `sb-closecurrentpane`: Implement `wezterm.action.CloseCurrentPane` and update `splitpaneinfo`
    4. `sb-equalize-panes`: Uses `wezterm.action.AdjustPaneSize` and `splitpaneinfo` to equalize the width of all panes in the active tab. In addition, it considers the presence of panes with _non-adjustable-left-edge (i.e. naledge)_ within a group of panes in the active tab and in pane(s) found in a subgroup of panes of a group of panes and how they affect the pane equalization width.
+      ![equalized_panes](images/equalized_panes.png)
+
 
 3. Provide the key bindings for WezTerm's `config.keys` to:
    1. Active pane by index
@@ -60,7 +62,7 @@ local repo = "https://github.com/sunbearc22/sb_manage_panes.wezterm.git"
 wezterm.plugin.require(repo).apply_to_config(config,
   {
     -- Active pane by index
-    activatepanebyindex_mods = "CTRL|ALT|SHIFT",    -- see key bindings
+    activatepanebyindex_mods = "SHIFT|CTRL|ALT",    -- see key bindings
     activatepanebyindex_key0 = ")",                 -- see key bindings
     activatepanebyindex_key1 = "!",                 -- see key bindings
     activatepanebyindex_key2 = "@",                 -- see key bindings
@@ -72,7 +74,7 @@ wezterm.plugin.require(repo).apply_to_config(config,
     activatepanebyindex_key8 = "*",                 -- see key bindings
     activatepanebyindex_key9 = "(",                 -- see key bindings
     -- Active adjacent pane on the left, right, above & below
-    activatepanedirection_mods = "CTRL|SHIFT",      -- see key bindings
+    activatepanedirection_mods = "SHIFT|CTRL",      -- see key bindings
     activatepanedirection_left_key = "LeftArrow",   -- see key bindings
     activatepanedirection_right_key = "RightArrow", -- see key bindings
     activatepanedirection_up_key = "UpArrow",       -- see key bindings
