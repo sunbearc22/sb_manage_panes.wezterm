@@ -18,7 +18,7 @@ This Plugin does the following:
    1. `window-config-reloaded`: Update `splitpaneinfo` everytime config reloads
    2. `sb-splitpane`: Implement `wezterm.action.SplitPane` and update `splitpaneinfo`
    3. `sb-closecurrentpane`: Implement `wezterm.action.CloseCurrentPane` and update `splitpaneinfo`
-   4. `sb-equalize-panes`: Uses `wezterm.action.AdjustPaneSize` and `splitpaneinfo` to equalize the width of all panes in the active tab. In addition, it considers the presence of panes with _non-adjustable-left-edge (i.e. naledge)_ within a group of panes in the active tab and in pane(s) found in a subgroup of panes of a group of panes and how they affect the pane equalization width.
+   4. `sb-equalize-panes`: Uses `wezterm.action.AdjustPaneSize` and `splitpaneinfo` to equalize the width of all panes in the active tab. In addition, it considers the presence of pane(s) with vertical slit that cannot be adjusted using WezTerm's AdjustPaneSize enum. In this plugin, such pane(s) are termed as pane(s) with _non-adjustable-left-edge (i.e. naledge)_. They can occur within a group of panes in the active tab and also in pane(s) found in their subgroup(s). Their presence causes inhomogeneity in pane equalization widths of the active tab, as is shown below:
       ![equalized_panes_1](images/equalized_panes_1.png)
       ![equalized_panes_2](images/equalized_panes_2.png)
 
