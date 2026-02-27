@@ -199,7 +199,7 @@ _Equalize Panes_
 | <kbd>SHIFT</kbd><kbd>ALT</kbd><kbd>CTRL</kbd><kbd>↓</kbd> | Split pane - down. |
 | <kbd>SHIFT</kbd><kbd>ALT</kbd><kbd>CTRL</kbd><kbd>'</kbd> | SplitVertical(SpawnCommand domain=CurrentPaneDomain). |
 | <kbd>SHIFT</kbd><kbd>ALT</kbd><kbd>CTRL</kbd><kbd>"</kbd> | SplitVertical(SpawnCommand domain=CurrentPaneDomain). |
-| <kbd>ALT</kbd><kbd>CTRL</kbd><kbd>'</kbd> | SplitVertical(SpawnCommand domain=CurrentPaneDomain). |
+| <kbd>ALT</kbd><kbd>CTRL</kbd><kbd>"</kbd> | SplitVertical(SpawnCommand domain=CurrentPaneDomain). |
 | <kbd>SHIFT</kbd><kbd>ALT</kbd><kbd>CTRL</kbd><kbd>%</kbd> | SplitHorizontal(SpawnCommand domain=CurrentPaneDomain). |
 | <kbd>ALT</kbd><kbd>CTRL</kbd><kbd>5</kbd> | SplitHorizintal(SpawnCommand domain=CurrentPaneDomain). |
 | <kbd>SHIFT</kbd><kbd>CTRL</kbd><kbd>z</kbd> | TogglePaneZoomState. |
