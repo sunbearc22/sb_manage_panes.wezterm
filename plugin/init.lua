@@ -94,7 +94,7 @@ local function loginfo_splitpaneinfo(name)
 end
 
 
----@param window any A WezTerm Window object.
+---@param window unknown A WezTerm Window object.
 ---@param name string Initial of event handler
 local function update_splitpaneinfo(window, name)
   --[[ Function will:
@@ -248,8 +248,8 @@ local function update_splitpaneinfo(window, name)
 end
 
 
----@param window any A WezTerm Window object.
----@param pane any A WezTerm Pane object
+---@param window unknown A WezTerm Window object.
+---@param pane unknown A WezTerm Pane object
 wezterm.on('window-config-reloaded', function(window, pane)
   wezterm.log_info "[MPANES-WCR] updating wezterm.GLOBAL.splitpaneinfo ..."
   update_splitpaneinfo(window, "MPANES-WCR")
@@ -273,7 +273,7 @@ end
 
 
 ---@param arraytable table
----@param target any
+---@param target unknown
 ---@return boolean
 local function contain(arraytable, target)
   --[[Function to check if arraytable contains element and it will return the corresponding
@@ -287,8 +287,8 @@ local function contain(arraytable, target)
 end
 
 
----@param window any A WezTerm Window object.
----@param pane any A WezTerm Pane object
+---@param window unknown A WezTerm Window object.
+---@param pane unknown A WezTerm Pane object
 ---@param direction string Specifies where the new pane will end up: "Left", "Right", "Up", "Down"
 ---@param size table Controls the size of the new pane. Can be {Cells=10} to specify eg: 10 cells or {Percent=50} to specify 50% of the available space. If omitted, {Percent=50} is the default.
 wezterm.on("sb-splitpane", function(window, pane, direction, size)
@@ -422,7 +422,7 @@ wezterm.on("sb-splitpane", function(window, pane, direction, size)
 end)
 
 
----@param window any A WezTerm Window object.
+---@param window unknown A WezTerm Window object.
 ---@return table
 local function map_pane_id_to_paneinfo(window)            -- changed argument to window instead of panesinfo
   local panesinfo = window:active_tab():panes_with_info() -- create new panesinfo everytime this function is called
@@ -439,10 +439,37 @@ local function map_pane_id_to_paneinfo(window)            -- changed argument to
 end
 
 
----@param window any A WezTerm Window object.
----@param pane any A WezTerm Pane object
+---@param window unknown A WezTerm Window object.
+---@param pane unknown A WezTerm Pane object
 wezterm.on("sb-closecurrentpane", function(window, pane, confirm)
-  --[[ Event handler to close the current pane and update the corresponding splitpaneinfo
+  --[[ Event handler to update the splitpaneinfo of the current pane (and its children and parent
+  panes) that is to be closed and to close the current pane.
+
+  Procedures:
+  1. Update wezterm.GLOBAL.splitpaneinfo.
+  2. Amend the relevant splitpaneinfo fields before closing the current pane.
+     1. Current pane's children panes:
+       if current pane has both children and parent panes:
+         - indicate that the current pane's children adopt it's parent pane as their parent pane
+       if current pane has children panes and not have a parent pane:
+         - indicate that the current pane's 1st child adopt it's parent as their parent pane
+         - indicate that the current pane's subsequent children adopt it's previous child as their parent pane
+         - insert current pane's subsequent child to the end of current pane's previous child's children field
+     2. Current pane's parent pane:
+        - remove current pane from its parent's children and directions fields
+        - if current pane has more than one child, insert current pane's children and direction fields
+          to the end of its parent's children and directions fields, respectively.
+     3. Change the vsplitedge of left or right adjacent panes under 2 conditions:
+        - if the vsplitedge of the left adjacent pane and current pane are Right & Left and there
+          is no right adjacent pane, then let the left adjacent pane vsplitede adopt current
+          pane's vsplitedge.
+        - if not left adjacent pane and curent and right adjacent panes' vsplitedge are Right & Left
+          or if left-adjacent, current and right-adjacent panes vsplitedge are Left, Right, Left then
+          change right adjacent pane's vsplitedge to current pane's vsplitedge.
+      4. Remove current pane's wezterm.GLOBAL.splitpaneinfo table
+  3. Close current pane
+  4. Ensure that when the active tab has only one pane, the splitpaneinfo of that pane is
+     correctly initialized.
   ]]
   local name = "MPANES-CCP"
 
@@ -464,11 +491,11 @@ wezterm.on("sb-closecurrentpane", function(window, pane, confirm)
   wezterm.log_info("[" .. name .. "] - parent pane id:" .. tostring(pane_spi.parent))
 
   -- 4. Update the splitpaneinfo of the current pane's children panes.
-  --    Make these children panes adopt the current pane's parent pane as their parent pane
   local children = convert_weztermGLOBALtable_to_luatable(pane_spi.children)
   wezterm.log_info("[" .. name .. "] - " .. pane_id .. ": children={" .. table.concat(children, ',') .. "}")
   if pane_spi.children and #pane_spi.children > 0 then -- pane has children
     if pane_spi.parent then                            -- pane parent
+      -- Indicate that the current pane's children adopt it's parent pane as their parent pane
       for k, _ in pairs(pane_spi.children) do
         local id = pane_spi.children[k]
         wezterm.GLOBAL.splitpaneinfo[win_id][tab_id][tostring(id)].parent = pane_spi.parent
@@ -481,15 +508,19 @@ wezterm.on("sb-closecurrentpane", function(window, pane, confirm)
     else -- pane has no parent
       for i, id in ipairs(children) do
         if i == 1 then
+          -- Indicate that the current pane's 1st child adopt it's parent as their parent pane
           wezterm.GLOBAL.splitpaneinfo[win_id][tab_id][tostring(id)].parent = pane_spi.parent
         else
+          -- Indicate that the current pane's subsequent children adopt it's previous child as their parent pane
           local previous_index = i - 1
           wezterm.GLOBAL.splitpaneinfo[win_id][tab_id][tostring(id)].parent = tostring(children[previous_index])
+          -- Insert current pane's subsequent child to the end of current pane's previous child's children field
           local p_children = wezterm.GLOBAL.splitpaneinfo[win_id][tab_id][tostring(children[previous_index])].children
           p_children[tostring(#p_children + 1)] = tostring(id)
           wezterm.GLOBAL.splitpaneinfo[win_id][tab_id][tostring(children[previous_index])].children = p_children
         end
       end
+      --- Show these changes in log_info
       for _, id in ipairs(children) do
         wezterm.log_info(
           "[" .. name .. "] -  updated children's wezterm.GLOBAL.splitpaneinfo[" ..
@@ -510,21 +541,18 @@ wezterm.on("sb-closecurrentpane", function(window, pane, confirm)
   end
 
   -- 5. Update current pane's parent pane splitpaneinfo.
-  --    Make parent pane's children and directions fields remove/replace current pane info
-  --    with the current pane's children pane's info.
-  --    - Remove if current pane's children pane's children and directions fields is empty.
-  --    - Replace if current pane's children pane's children and directions fields is not empty.
-  --      Use first element for replacement.
-  --      Subsequent elements are appended to the end of parent pane's children and directions fields.
   if parent_spi then
     for k, _ in pairs(parent_spi.children) do
       if parent_spi.children[tostring(k)] == pane_id then
+        -- Remove current pane from its parent's children and directions fields
         parent_spi.children[tostring(k)] = nil   -- remove
         parent_spi.directions[tostring(k)] = nil -- remove
       end
       break
     end
     if #pane_spi.children > 1 then
+      -- Insert current pane's children and direction field to the end of its parent's children
+      -- and directions fields
       wezterm.log_info("[" .. name .. "] - #pane_spi.children > 1 ")
       for i = 1, #pane_spi.children do
         parent_spi.children[tostring(#parent_spi.children + i - 1)] = pane_spi.children[tostring(i)]
@@ -546,7 +574,7 @@ wezterm.on("sb-closecurrentpane", function(window, pane, confirm)
       table.concat(pdirections, ',') .. "}")
   end
 
-  -- 6. Update the vsplitedge field of its parent pane splitpaneinfo -- TO DO
+  -- 6. Change the vsplitedge of the left or right adjacent panes under 2 conditions:
   local lpane = window:active_tab():get_pane_direction("Left")
   local lpane_id, lpane_spi
   if lpane then
@@ -567,27 +595,26 @@ wezterm.on("sb-closecurrentpane", function(window, pane, confirm)
       " vsplitedge=" .. rpane_spi.vsplitedge .. " parent=" .. tostring(rpane_spi.parent)
     )
   end
-  wezterm.log_info("pane_spi.children = " .. tostring(pane_spi.children))
-  wezterm.log_info("#pane_spi.children = " .. tostring(#pane_spi.children))
-  wezterm.log_info("pane_spi.vsplitedge = " .. tostring(pane_spi.vsplitedge))
+  local pane_spi_children = convert_weztermGLOBALtable_to_luatable(pane_spi.children)
+  wezterm.log_info("[" .. name .. "] - pane_spi.children = {" .. table.concat(pane_spi_children, ',') .. "}")
+  wezterm.log_info("[" .. name .. "] - pane_spi.vsplitedge = " .. tostring(pane_spi.vsplitedge))
   if parent_spi then
-    wezterm.log_info("parent_spi.vsplitedge = " .. tostring(parent_spi.vsplitedge))
+    wezterm.log_info("[" .. name .. "] - parent_spi.vsplitedge = " .. tostring(parent_spi.vsplitedge))
   end
-
   -- Known conditions needing a change of vsplitedge
   local pane_id_to_paneinfo_map = map_pane_id_to_paneinfo(window)
   if lpane and lpane_spi.vsplitedge == "Right" and pane_spi.vsplitedge == "Left" and not rpane then
     -- change lpane's vsplitedge
-    wezterm.log_info(" change lpane's vsplitedge")
+    wezterm.log_info("[" .. name .. "] - Change lpane's vsplitedge")
     wezterm.GLOBAL.splitpaneinfo[win_id][tab_id][lpane_id].vsplitedge = pane_spi.vsplitedge
   elseif (not lpane and pane_spi.vsplitedge == "Right" and rpane and rpane_spi.vsplitedge == "Left") or
       (lpane and lpane_spi.vsplitedge == "Left" and pane_spi.vsplitedge == "Right" and rpane and rpane_spi.vsplitedge == "Left") then
     -- change rpane's vsplitedge
-    wezterm.log_info(" change rpane's vsplitedge")
+    wezterm.log_info("[" .. name .. "] - Change rpane's vsplitedge")
     wezterm.GLOBAL.splitpaneinfo[win_id][tab_id][rpane_id].vsplitedge = pane_spi.vsplitedge
   end
 
-  -- 7. Remove active pane table from wezterm.GLOBAL.splitpaneinfo
+  -- 7. Remove current pane's wezterm.GLOBAL.splitpaneinfo table
   local spi_atab = wezterm.GLOBAL.splitpaneinfo[win_id][tab_id]
   spi_atab[pane_id] = nil
   wezterm.GLOBAL.splitpaneinfo[win_id][tab_id] = spi_atab
@@ -596,6 +623,8 @@ wezterm.on("sb-closecurrentpane", function(window, pane, confirm)
   window:perform_action(act.CloseCurrentPane { confirm = confirm }, pane)
   wezterm.log_info("[" .. name .. "] - current pane id:" .. pane_id .. " closed.")
 
+  -- 9. Ensure that when the active tab has only one pane, the splitpaneinfo of that pane is
+  --    correctly initialized.
   if #window:active_tab():panes() == 1 then
     local apane = window:active_tab():active_pane()
     local apane_id = tostring(apane:pane_id())
@@ -612,7 +641,8 @@ wezterm.on("sb-closecurrentpane", function(window, pane, confirm)
 end)
 
 
----@param atab any A WezTerm MuxTab object of the active tab.
+---@param atab unknown A WezTerm MuxTab object of the active tab.
+---@return number
 local function get_rows_in_active_tab(atab)
   --[[Function to get the height of the active tab in terms of cell rows.
   It is obtained by adding the height of all paned with left=0.]]
@@ -630,7 +660,7 @@ local function get_rows_in_active_tab(atab)
 end
 
 
----@param window any A WezTerm Window object.
+---@param window unknown A WezTerm Window object.
 ---@return table
 local function get_panes_groups(window)
   --[[This function returns the 'groups' array-table which can consist of multiple 'group'
@@ -704,6 +734,7 @@ end
 ---@param groups table[]  An array-table with array-tables of WezTerm PaneInformation objects.
 ---@param win_id string WezTerm's MuxWindow object ID
 ---@param tab_id string WezTerm's MuxTab object ID
+---@return table[]
 local function get_group_with_non_adjustable_left_edge(groups, win_id, tab_id)
   --[[ Check if there is/are any group with non_adjustable_left_edge. If so, the group's index
   will be stored in an array-table and returned. If not, an empty table will be returned.
@@ -787,7 +818,7 @@ end
 
 ---@param panesinfo table  An array-table of WezTerm's PaneInformation Objects
 ---@param groups table[]  An array-table with array-tables of WezTerm PaneInformation objects.
----@return number group_ewidth Equlization width
+---@return number
 local function get_group_equalization_width_default(panesinfo, groups)
   -- Assumes each group will have the same averaged number of column cells.
   local atab_last_pane_left = panesinfo[#panesinfo].left
@@ -814,6 +845,7 @@ local function get_pane_groupindex(groups, pane_id)
     end
   end
 end
+
 
 ---@param group table[] An array-table of WezTerm's PaneInformation objects
 ---@return number[]
@@ -844,7 +876,7 @@ local function get_panes_creation_sequence(win_id, tab_id)
   return panes_creation_sequence
 end
 
----@param group any[]  An array-table of WezTerm's PaneInformation Objects
+---@param group table[]  An array-table of WezTerm's PaneInformation Objects
 ---@return table
 local function get_subgroups_of_group(group)
   --[[Function to get the subgroups of PaneInformation from a group of PaneInformation.
@@ -870,6 +902,9 @@ local function get_subgroups_of_group(group)
 end
 
 
+---@param window unknown A WezTerm Window object.
+---@param groups table[]  An array-table with array-tables of WezTerm PaneInformation objects.
+---@return table
 local function get_pane_equalization_width_map_for_no_naledge(window, groups)
   --[[This functions returns a map of the pane_id and its equalization width of the active tab.
   ]]
@@ -901,7 +936,7 @@ end
 
 ---@param pane_id number WezTerm Pane object's ID.
 ---@param subgroups table A sparse-table of the subgroup of panes in the active tab.
----@return table
+---@return table[]
 local function get_pane_subgroup_info(pane_id, subgroups)
   local pane_subgroup_top
   local pane_subgroup
@@ -920,6 +955,10 @@ local function get_pane_subgroup_info(pane_id, subgroups)
 end
 
 
+---@param window unknown A WezTerm Window object.
+---@param groups table[]  An array-table with array-tables of WezTerm PaneInformation objects.
+---@param gwnaledge number[] The index of the pane group(s) with naledge
+---@return table
 local function get_pane_equalization_width_map_for_naledge(window, groups, gwnaledge)
   --[[ This functions returns a map of the pane_id and its equalization width of the active tab with
   pane group(s) that has non_adjustable_left_edge.
@@ -1226,7 +1265,7 @@ end
 ---@param win_id string WezTerm's MuxWindow object ID
 ---@param tab_id string WezTerm's MuxTab object ID
 ---@param groups table[] An array-table with array-tables of WezTerm PaneInformation objects.
----@param window any A WezTerm Window object.
+---@param window unknown A WezTerm Window object.
 ---@return number[]
 local function get_group_adjust_sequence(name, win_id, tab_id, groups, window)
   --[[This function determines the sequence to adjust the group of panes in groups. It returns an
@@ -1430,7 +1469,7 @@ local function get_group_adjust_sequence(name, win_id, tab_id, groups, window)
 end
 
 
----@param window any A WezTerm Window object.
+---@param window unknown A WezTerm Window object.
 ---@param ewidth number Equalization width
 ---@param name string Initial of event handler
 local function adjust_right_slit(window, ewidth, name)
@@ -1461,7 +1500,7 @@ local function adjust_right_slit(window, ewidth, name)
 end
 
 
----@param window any A WezTerm Window object.
+---@param window unknown A WezTerm Window object.
 ---@param ewidth number Equalization width
 ---@param name string Initial of event handler
 local function adjust_left_slit(window, ewidth, name)
@@ -1493,8 +1532,8 @@ end
 
 
 ---@param id number WezTerm Pane object ID
----@param window any WezTerm Window object
----@return any|nil
+---@param window unknown WezTerm Window object
+---@return unknown|nil
 local function get_pane(id, window)
   local pane = nil
   for _, ipane in ipairs(window:active_tab():panes()) do
@@ -1507,7 +1546,7 @@ local function get_pane(id, window)
 end
 
 
----@param window any A WezTerm Window object.
+---@param window unknown A WezTerm Window object.
 ---@param win_id string WezTerm's MuxWindow object ID
 ---@param tab_id string WezTerm's MuxTab object ID
 ---@param group table[] An array-table of WezTerm's PaneInformation objects
@@ -1531,7 +1570,7 @@ local function equalize_group_with_one_pane(window, win_id, tab_id, group, panei
 end
 
 
----@param window any A WezTerm Window object.
+---@param window unknown A WezTerm Window object.
 ---@param win_id string WezTerm's MuxWindow object ID
 ---@param tab_id string WezTerm's MuxTab object ID
 ---@param group table[] An array-table of WezTerm's PaneInformation objects
@@ -1586,8 +1625,8 @@ local function equalize_group_with_multuple_panes(window, win_id, tab_id, group,
 end
 
 
----@param window any A WezTerm Window object.
----@param pane any A WezTerm Pane object
+---@param window unknown A WezTerm Window object.
+---@param pane unknown A WezTerm Pane object
 wezterm.on("sb-equalize-panes", function(window, pane)
   --[[ Handler for the sb-equalize-pane event
   1. Get ids of active window and tab
