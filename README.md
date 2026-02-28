@@ -2,8 +2,7 @@
 
 This Plugin does the following:
 
-1. Initialize a `wezterm.GLOBAL.splitpaneinfo` table.
-   Detailed structure:
+1. Initialize a `wezterm.GLOBAL.splitpaneinfo` table:
    ```
    spi = wezterm.GLOBAL.splitpaneinfo[win_id][tab_id][pane_id] where
    spi.parent     - stores the parent pane ID - string
@@ -11,8 +10,8 @@ This Plugin does the following:
    spi.directions - stores a table of its children pane SplitPane direction
    spi.vsplitedge - stores a string indicating the pane's vertical splitedge
    spi.hsplitedge - stores a string indicating the pane's horizontal splitedge
+   -- Note: `win_id`, `tab_id`, `pane_id` must be a string.
    ```
-   Note: `win_id`, `tab_id`, `pane_id` must be a string.
 
 2. Provide 4 event handlers to perform the following task(s):
    1. `window-config-reloaded`: Update `splitpaneinfo` everytime config reloads
@@ -23,19 +22,25 @@ This Plugin does the following:
       ![equalized_panes_2](images/equalized_panes_2.png)
 
 
-3. Provide the key bindings for WezTerm's `config.keys` to:
-   1. Active pane by index
-   2. Active adjacent pane on the left, right, above & below
-   3. Activate pane via PaneSelect
-   4. Adjust active pane size
-   5. Create new pane on the left, right, top and bottom of currect pane
-   6. Rotate pane sequence in a counterclockwise and clockwise manner
-   7. Zoom in and out of pane
-   8. Close active pane
-   9. Equalize panes in the active tab
+3. Provide key bindings for WezTerm's `config.keys` to:
+   | No. | Purpose | Action via |
+   | :-----: | :------- | :------ |
+   |1.| Active pane by index. | wezterm.action |
+   |2.| Active adjacent pane on the left, right, above & below. | wezterm.action |
+   |3.| Activate pane via PaneSelect. | wezterm.action |
+   |4.| Adjust active pane width. | wezterm.action  |
+   |5.| Create new pane on the left, right, top and bottom of currect pane. | `sb-splitpane` event handler. |
+   |6.| Rotate pane sequence in a counterclockwise and clockwise manner. | wezterm.action |
+   |7.| Zoom in and out of pane. | wezterm.action |
+   |8.| Close active pane. | `sb-closecurrentpane` event handler|
+   |9.| Equalize panes in the active tab. | `sb-equalize-panes` event handler |
 
-4. Disable certain WezTerm default key bindings related to pane management.
+4. Disable certain WezTerm default key-bindings related to pane management.
 
+**Caveats:**
+1. All event handlers are experimental.
+2. The functionality of `sb-equalize-panes` event handler is known to break after a active pane is closed by the bash `exit` command. To avoid this situation, use the "close active pane" key-binding instead. If this issue does occur, know that it is only a local issue, i.e. it is tab specific and does not affect panes in other tabs. The only recourse presently is to close the affected tab and start afresh working on a new tab.
+3. The functionality of `sb-equalize-panes` event handler is also known to break if the key-bindings to split pane is not used to create new panes.
 
 ## Installation & Usage
 
