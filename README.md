@@ -28,7 +28,7 @@ This Plugin does the following:
    |1.| Active pane by index. | wezterm.action |
    |2.| Active adjacent pane on the left, right, above & below. | wezterm.action |
    |3.| Activate pane via PaneSelect. | wezterm.action |
-   |4.| Adjust active pane width. | wezterm.action  |
+   |4.| Adjust active pane size. | wezterm.action  |
    |5.| Create new pane on the left, right, top and bottom of currect pane. | `sb-splitpane` event handler. |
    |6.| Rotate pane sequence in a counterclockwise and clockwise manner. | wezterm.action |
    |7.| Zoom in and out of pane. | wezterm.action |
